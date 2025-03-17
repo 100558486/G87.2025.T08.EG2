@@ -1,0 +1,39 @@
+//Terminal and Non-terminal nodes are marked with T/NT
+
+
+
+File ::= Start_object Data Fin_object  (NT)
+
+Start_object ::= {  (T)
+
+Fin_object ::= }  (T)
+
+Data ::= Field1 Separator Field2  (NT)
+
+Field1 ::= Label_data1 Equal Value_data1  (NT)
+
+Field2 ::= Label_data2 Equal Value_data2  (NT)
+
+Separator ::= ,  (T)
+
+Equal ::= :  (T)
+
+Label_data1 ::= "IBAN"  (T)
+
+Value_data1 ::= quotation_marks IBAN_value quotation_marks  (NT)
+
+Label_data2 ::= "AMOUNT"  (T)
+
+Value_data2 ::= quotation_marks Currency Space Amount_value quotation_marks  (NT)
+
+Currency ::= "EUR"  (T)
+
+Space ::= " "  (T)
+
+IBAN_value ::= Valid_Spanish_IBAN  (T)
+
+Amount_value ::= Digit+ . Digit{2}  (NT)
+
+quotation_marks ::= ""  (T)
+
+Digit ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9  (T)
