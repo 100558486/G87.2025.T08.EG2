@@ -3,6 +3,11 @@ import hashlib
 import json
 from datetime import datetime, timezone
 
+
+class InvalidTransferRequest(Exception):
+    """Custom exception for invalid transfer requests"""
+    pass
+
 class TransferRequest:
     """Class representing a transfer request"""
     def __init__(self,
@@ -95,3 +100,27 @@ class TransferRequest:
     def transfer_code(self):
         """Returns the md5 signature (transfer code)"""
         return hashlib.md5(str(self).encode()).hexdigest()
+
+
+def transfer_request(from_iban: str, to_iban: str, concept: str, type: str, date: str, amount: float) -> str:
+    try:
+        transfer = TransferRequest(from_iban, to_iban, type, concept, date, amount)
+        transfer_data = transfer.to_json()
+
+        file_name = "transfers.json"
+        try:
+            with open(file_name, "r") as f:
+                transfers = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            transfers = []
+
+        if any(t["transfer_code"] == transfer.transfer_code for t in transfers):
+            raise InvalidTransferRequest("Duplicate transfer detected")
+
+        transfers.append(transfer_data)
+        with open(file_name, "w") as f:
+            json.dump(transfers, f, indent=4)
+
+        return transfer.transfer_code
+    except InvalidTransferRequest as e:
+        return str(e)
