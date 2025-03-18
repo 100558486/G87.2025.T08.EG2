@@ -1,6 +1,6 @@
-"""MODULE: transfer_request. Contains the transfer request class"""
 import hashlib
 import json
+import re
 from datetime import datetime, timezone
 
 
@@ -8,21 +8,22 @@ class InvalidTransferRequest(Exception):
     """Custom exception for invalid transfer requests"""
     pass
 
+
 class TransferRequest:
     """Class representing a transfer request"""
-    def __init__(self,
-                 from_iban: str,
-                 transfer_type: str,
-                 to_iban:str,
-                 transfer_concept:str,
-                 transfer_date:str,
-                 transfer_amount:float):
-        self.__from_iban = from_iban
-        self.__to_iban = to_iban
-        self.__transfer_type = transfer_type
-        self.__concept = transfer_concept
-        self.__transfer_date = transfer_date
-        self.__transfer_amount = transfer_amount
+
+    VALID_TRANSFER_TYPES = {"ORDINARY", "URGENT", "IMMEDIATE"}
+
+    def __init__(self, from_iban: str, transfer_type: str, to_iban: str, transfer_concept: str, transfer_date: str,
+                 transfer_amount: float):
+        # ✅ Calling validation functions before assignment
+        self.__from_iban = self.validate_iban(from_iban)
+        self.__to_iban = self.validate_iban(to_iban)
+        self.__transfer_type = self.validate_transfer_type(transfer_type)
+        self.__concept = self.validate_concept(transfer_concept)
+        self.__transfer_date = self.validate_date(transfer_date)
+        self.__transfer_amount = self.validate_amount(transfer_amount)
+
         justnow = datetime.now(timezone.utc)
         self.__time_stamp = datetime.timestamp(justnow)
 
@@ -41,86 +42,83 @@ class TransferRequest:
             "time_stamp": self.__time_stamp,
             "transfer_code": self.transfer_code
         }
-    @property
-    def from_iban(self):
-        """Sender's iban"""
-        return self.__from_iban
-
-    @from_iban.setter
-    def from_iban(self, value):
-        self.__from_iban = value
-
-    @property
-    def to_iban(self):
-        """receiver's iban"""
-        return self.__to_iban
-
-    @to_iban.setter
-    def to_iban(self, value):
-        self.__to_iban = value
-
-    @property
-    def transfer_type(self):
-        """Property representing the type of transfer: REGULAR, INMEDIATE or URGENT """
-        return self.__transfer_type
-    @transfer_type.setter
-    def transfer_type(self, value):
-        self.__transfer_type = value
-
-    @property
-    def transfer_amount(self):
-        """Property respresenting the transfer amount"""
-        return self.__transfer_amount
-    @transfer_amount.setter
-    def transfer_amount(self, value):
-        self.__transfer_amount = value
-
-    @property
-    def transfer_concept(self):
-        """Property representing the transfer concept"""
-        return self.__transfer_concept
-    @transfer_concept.setter
-    def transfer_concept(self, value):
-        self.__transfer_concept = value
-
-    @property
-    def transfer_date( self ):
-        """Property representing the transfer's date"""
-        return self.__transfer_date
-    @transfer_date.setter
-    def transfer_date( self, value ):
-        self.__transfer_date = value
-
-    @property
-    def time_stamp(self):
-        """Read-only property that returns the timestamp of the request"""
-        return self.__time_stamp
 
     @property
     def transfer_code(self):
         """Returns the md5 signature (transfer code)"""
         return hashlib.md5(str(self).encode()).hexdigest()
 
+    # ✅ IBAN VALIDATION
+    @staticmethod
+    def validate_iban(iban: str):
+        """Validates that the IBAN is a Spanish IBAN (starts with ES and is 24 characters long)"""
+        if not re.fullmatch(r"ES\d{22}", iban):
+            raise InvalidTransferRequest("Invalid IBAN: Must start with 'ES' and contain 24 digits")
+        return iban
 
-def transfer_request(from_iban: str, to_iban: str, concept: str, type: str, date: str, amount: float) -> str:
-    try:
-        transfer = TransferRequest(from_iban, to_iban, type, concept, date, amount)
-        transfer_data = transfer.to_json()
+    # ✅ CONCEPT VALIDATION
+    @staticmethod
+    def validate_concept(concept: str):
+        """Validates the concept (10-30 characters, must contain at least two words)"""
+        if not (10 <= len(concept) <= 30) or len(concept.split()) < 2:
+            raise InvalidTransferRequest("Invalid concept: Must be 10-30 characters and contain at least two words")
+        return concept
 
-        file_name = "transfers.json"
+    # ✅ TRANSFER TYPE VALIDATION
+    @classmethod
+    def validate_transfer_type(cls, transfer_type: str):
+        """Validates that the transfer type is one of the allowed values"""
+        if transfer_type not in cls.VALID_TRANSFER_TYPES:
+            raise InvalidTransferRequest("Invalid transfer type: Must be 'ORDINARY', 'URGENT', or 'IMMEDIATE'")
+        return transfer_type
+
+    # ✅ DATE VALIDATION
+    @staticmethod
+    def validate_date(date_str: str):
+        """Validates the transfer date (must be in 'DD/MM/YYYY' format, between 2025 and 2050, and not before today)"""
         try:
-            with open(file_name, "r") as f:
-                transfers = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            transfers = []
+            transfer_date = datetime.strptime(date_str, "%d/%m/%Y")
+        except ValueError:
+            raise InvalidTransferRequest("Invalid date format: Must be 'DD/MM/YYYY'")
 
-        if any(t["transfer_code"] == transfer.transfer_code for t in transfers):
-            raise InvalidTransferRequest("Duplicate transfer detected")
+        # Ensure year is between 2025 and 2050
+        if not (2025 <= transfer_date.year <= 2050):
+            raise InvalidTransferRequest("Invalid year: Must be between 2025 and 2050")
 
-        transfers.append(transfer_data)
-        with open(file_name, "w") as f:
-            json.dump(transfers, f, indent=4)
+        # Ensure date is not before today
+        if transfer_date.date() < datetime.today().date():
+            raise InvalidTransferRequest("Invalid date: Cannot be in the past")
 
-        return transfer.transfer_code
-    except InvalidTransferRequest as e:
-        return str(e)
+        return date_str
+
+    # ✅ AMOUNT VALIDATION
+    @staticmethod
+    def validate_amount(amount: float):
+        """Validates the transfer amount (must be between 10.00 and 10000.00 with max 2 decimal places)"""
+        if not (10.00 <= amount <= 10000.00):
+            raise InvalidTransferRequest("Invalid amount: Must be between 10.00 and 10000.00")
+        if len(str(amount).split(".")[-1]) > 2:
+            raise InvalidTransferRequest("Invalid amount: Can have at most 2 decimal places")
+        return amount
+
+
+def transfer_request(from_iban: str, to_iban: str, concept: str, transfer_type: str, date: str, amount: float) -> str:
+    transfer = TransferRequest(from_iban, transfer_type, to_iban, concept, date, amount)
+    transfer_data = transfer.to_json()
+
+    file_name = "transfers.json"
+    try:
+        with open(file_name, "r") as f:
+            transfers = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        transfers = []
+
+    # ✅ DUPLICATE TRANSFER DETECTION
+    if any(t["transfer_code"] == transfer.transfer_code for t in transfers):
+        raise InvalidTransferRequest("Duplicate transfer detected")
+
+    transfers.append(transfer_data)
+    with open(file_name, "w") as f:
+        json.dump(transfers, f, indent=4)
+
+    return transfer.transfer_code
