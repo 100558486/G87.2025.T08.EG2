@@ -1,6 +1,11 @@
 """Contains the class OrderShipping"""
 from datetime import datetime, timezone
 import hashlib
+import json
+import os
+import re
+from src.main.python.uc3m_money import AccountManagementException
+
 
 class AccountDeposit():
     """Class representing the information required for shipping of an order"""
@@ -31,32 +36,46 @@ class AccountDeposit():
                ",deposit_date:" + str(self.__deposit_date) + "}"
 
     @property
-    def to_iban(self):
-        """Property that represents the product_id of the patient"""
-        return self.__to_iban
-
-    @to_iban.setter
-    def to_iban(self, value):
-        self.__to_iban = value
-
-    @property
-    def deposit_amount(self):
-        """Property that represents the order_id"""
-        return self.__deposit_amount
-    @deposit_amount.setter
-    def deposit_amount(self, value):
-        self.__deposit_amount = value
-
-    @property
-    def deposit_date(self):
-        """Property that represents the phone number of the client"""
-        return self.__deposit_date
-    @deposit_date.setter
-    def deposit_date( self, value ):
-        self.__deposit_date = value
-
-
-    @property
-    def deposit_signature( self ):
-        """Returns the sha256 signature of the date"""
+    def deposit_signature(self):
         return hashlib.sha256(self.__signature_string().encode()).hexdigest()
+
+
+def validate_iban(iban: str) -> bool:
+    return bool(re.match(r'ES\d{22}', iban))
+
+
+def validate_amount(amount: str) -> float:
+    match = re.match(r'^EUR\s(\d+\.\d{2})$', amount)
+    if match:
+        return float(match.group(1))
+    raise AccountManagementException("Invalid amount format")
+
+
+def deposit_into_account(input_file: str) -> str:
+    if not os.path.exists(input_file):
+        raise AccountManagementException("The data file is not found")
+
+    try:
+        with open(input_file, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+    except json.JSONDecodeError:
+        raise AccountManagementException("The file is not in JSON format")
+
+    if not all(key in data for key in ["IBAN", "AMOUNT"]):
+        raise AccountManagementException("The JSON does not have the expected structure")
+
+    iban = data["IBAN"]
+    amount = data["AMOUNT"]
+
+    if not validate_iban(iban):
+        raise AccountManagementException("Invalid IBAN format")
+
+    deposit_amount = validate_amount(amount)
+
+    deposit = AccountDeposit(iban, deposit_amount)
+
+    output_file = f"deposit_{iban}_{int(deposit.deposit_date)}.json"
+    with open(output_file, 'w', encoding='utf-8') as file:
+        json.dump(deposit.to_json(), file, indent=4)
+
+    return deposit.deposit_signature

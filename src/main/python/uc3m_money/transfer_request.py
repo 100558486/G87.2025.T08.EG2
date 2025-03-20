@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timezone
 
 
-class InvalidTransferRequest(Exception):
+class AccountManagementException(Exception):
     """Custom exception for invalid transfer requests"""
     pass
 
@@ -53,7 +53,7 @@ class TransferRequest:
     def validate_iban(iban: str):
         """Validates that the IBAN is a Spanish IBAN (starts with ES and is 24 characters long)"""
         if not re.fullmatch(r"ES\d{22}", iban):
-            raise InvalidTransferRequest("Invalid IBAN: Must start with 'ES' and contain 24 digits")
+            raise AccountManagementException("Invalid IBAN: Must start with 'ES' and contain 24 digits")
         return iban
 
     # ✅ CONCEPT VALIDATION
@@ -61,7 +61,7 @@ class TransferRequest:
     def validate_concept(concept: str):
         """Validates the concept (10-30 characters, must contain at least two words)"""
         if not (10 <= len(concept) <= 30) or len(concept.split()) < 2:
-            raise InvalidTransferRequest("Invalid concept: Must be 10-30 characters and contain at least two words")
+            raise AccountManagementException("Invalid concept: Must be 10-30 characters and contain at least two words")
         return concept
 
     # ✅ TRANSFER TYPE VALIDATION
@@ -69,7 +69,7 @@ class TransferRequest:
     def validate_transfer_type(cls, transfer_type: str):
         """Validates that the transfer type is one of the allowed values"""
         if transfer_type not in cls.VALID_TRANSFER_TYPES:
-            raise InvalidTransferRequest("Invalid transfer type: Must be 'ORDINARY', 'URGENT', or 'IMMEDIATE'")
+            raise AccountManagementException("Invalid transfer type: Must be 'ORDINARY', 'URGENT', or 'IMMEDIATE'")
         return transfer_type
 
     # ✅ DATE VALIDATION
@@ -79,15 +79,15 @@ class TransferRequest:
         try:
             transfer_date = datetime.strptime(date_str, "%d/%m/%Y")
         except ValueError:
-            raise InvalidTransferRequest("Invalid date format: Must be 'DD/MM/YYYY'")
+            raise AccountManagementException("Invalid date format: Must be 'DD/MM/YYYY'")
 
         # Ensure year is between 2025 and 2050
         if not (2025 <= transfer_date.year <= 2050):
-            raise InvalidTransferRequest("Invalid year: Must be between 2025 and 2050")
+            raise AccountManagementException("Invalid year: Must be between 2025 and 2050")
 
         # Ensure date is not before today
         if transfer_date.date() < datetime.today().date():
-            raise InvalidTransferRequest("Invalid date: Cannot be in the past")
+            raise AccountManagementException("Invalid date: Cannot be in the past")
 
         return date_str
 
@@ -96,9 +96,9 @@ class TransferRequest:
     def validate_amount(amount: float):
         """Validates the transfer amount (must be between 10.00 and 10000.00 with max 2 decimal places)"""
         if not (10.00 <= amount <= 10000.00):
-            raise InvalidTransferRequest("Invalid amount: Must be between 10.00 and 10000.00")
+            raise AccountManagementException("Invalid amount: Must be between 10.00 and 10000.00")
         if len(str(amount).split(".")[-1]) > 2:
-            raise InvalidTransferRequest("Invalid amount: Can have at most 2 decimal places")
+            raise AccountManagementException("Invalid amount: Can have at most 2 decimal places")
         return amount
 
 
@@ -113,9 +113,9 @@ def transfer_request(from_iban: str, to_iban: str, concept: str, transfer_type: 
     except (FileNotFoundError, json.JSONDecodeError):
         transfers = []
 
-    # ✅ DUPLICATE TRANSFER DETECTION
+    # duplicate transfer detection
     if any(t["transfer_code"] == transfer.transfer_code for t in transfers):
-        raise InvalidTransferRequest("Duplicate transfer detected")
+        raise AccountManagementException("Duplicate transfer detected")
 
     transfers.append(transfer_data)
     with open(file_name, "w") as f:
