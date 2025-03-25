@@ -40,7 +40,36 @@ class TestComprehensiveAccountDeposit(unittest.TestCase):
             "invalid_amount_value": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "USD 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
             "missing_deposit_date_key": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50" }',
             "invalid_deposit_date_value": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "INVALID_DATE" }',
-            "missing_deposit_date_value": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": }'
+            "missing_deposit_date_value": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": }',
+            "missing_alg_key2": '{ "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_alg_key2": '{ "alg": "SHA-256", "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_typ_key2": '{ "alg": "SHA-256", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_typ_key2": '{ "alg": "SHA-256", "typ": "DEPOSIT", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_iban_key2": '{ "alg": "SHA-256", "typ": "DEPOSIT", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_iban_key2": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_amount_key2": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_amount_key2": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_deposit_date_key2": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50" }',
+            "duplicate_deposit_date_key": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_field_separator1": '{ "alg": "SHA-256" "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_field_separator1": '{ "alg": "SHA-256",, "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_key_separator1": '{ "alg" "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_key_separator1": '{ "alg":: "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_field_separator2": '{ "alg": "SHA-256", "typ": "DEPOSIT" "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_field_separator2": '{ "alg": "SHA-256", "typ": "DEPOSIT",, "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_field_separator3": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332" "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_field_separator3": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332",, "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_field_separator4": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50" "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_field_separator4": '{ "alg": "SHA-256", "typ": "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50",, "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_key_separator2": '{ "typ" "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_key_separator2": '{ "typ":: "DEPOSIT", "iban": "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_key_separator3": '{ "iban" "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_key_separator3": '{ "iban":: "ES9121000418450200051332", "amount": "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_key_separator4": '{ "amount" "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "duplicate_key_separator4": '{ "amount":: "EUR 1000.50", "deposit_date": "2025-03-20T12:34:56Z" }',
+            "missing_key_separator5": '{ "deposit_date" "2025-03-20T12:34:56Z" }',
+            "duplicate_key_separator5": '{ "deposit_date":: "2025-03-20T12:34:56Z" }'
+
         }
 
         # Creating test files in the temporary directory
@@ -236,6 +265,97 @@ class TestComprehensiveAccountDeposit(unittest.TestCase):
     def test_duplicate_deposit_date_value(self):
         with self.assertRaises(AccountManagementException):
             self.run_error_test("duplicate_deposit_date_value")
+
+    def test_missing_deposit_date_key(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_deposit_date_key")
+
+    def test_invalid_deposit_date_value(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("invalid_deposit_date_value")
+
+    def test_missing_deposit_date_value(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_deposit_date_value")
+
+    def test_duplicate_deposit_date_key(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("duplicate_deposit_date_key")
+
+    # Syntax Errors - Field Separators
+    def test_missing_field_separator1(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_field_separator1")
+
+    def test_duplicate_field_separator1(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("duplicate_field_separator1")
+
+    def test_missing_field_separator2(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_field_separator2")
+
+    def test_duplicate_field_separator2(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("duplicate_field_separator2")
+
+    def test_missing_field_separator3(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_field_separator3")
+
+    def test_duplicate_field_separator3(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("duplicate_field_separator3")
+
+    def test_missing_field_separator4(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_field_separator4")
+
+    def test_duplicate_field_separator4(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("duplicate_field_separator4")
+
+    # Syntax Errors - Key Separators
+    def test_missing_key_separator1(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_key_separator1")
+
+    def test_duplicate_key_separator1(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("duplicate_key_separator1")
+
+    def test_missing_key_separator2(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_key_separator2")
+
+    def test_duplicate_key_separator2(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("duplicate_key_separator2")
+
+    def test_missing_key_separator3(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_key_separator3")
+
+    def test_duplicate_key_separator3(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("duplicate_key_separator3")
+
+    def test_missing_key_separator4(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_key_separator4")
+
+    def test_duplicate_key_separator4(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("duplicate_key_separator4")
+
+    def test_missing_key_separator5(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("missing_key_separator5")
+
+    def test_duplicate_key_separator5(self):
+        with self.assertRaises(AccountManagementException):
+            self.run_error_test("duplicate_key_separator5")
+
 
     def tearDown(self):
         """Remove temporary directory and test files."""
