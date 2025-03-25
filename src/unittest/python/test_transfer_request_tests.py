@@ -102,6 +102,68 @@ class TransferRequestTests(unittest.TestCase):
                              "7/7/2025", 10000.01)
         print(f"Exception raised: {context.exception}")
 
+    def test_transfer_amount_above_maximum(self):
+        print("Testing transfer amount above maximum...")
+        with self.assertRaises(AccountManagementException) as context:
+            transfer_request("ES9121000418450200051332", "ES7921000813450200056789", "House Rent", "ORDINARY",
+                             "7/1/2025", 10000.01)
+        print(f"Exception raised: {context.exception}")
+
+    def test_valid_iban_different_banks(self):
+        print("Testing valid IBANs with different banks...")
+        result = transfer_request("ES4420385778983000760236", "ES3320385778983000760238", "Tuition Fees",
+                                  "ORDINARY", "15/06/2025", 1500.00)
+        print(f"Received result: {result}")
+        self.assertIsInstance(result, str)
+        self.assertEqual(len(result), 32)
+
+    def test_valid_iban_same_bank(self):
+        print("Testing valid IBANs with the same bank...")
+        result = transfer_request("ES9121000418450200051332", "ES9121000418450200051340", "Car Loan Payment",
+                                  "IMMEDIATE", "22/07/2025", 750.5)
+        print(f"Received result: {result}")
+        self.assertIsInstance(result, str)
+        self.assertEqual(len(result), 32)
+
+    def test_concept_max_length(self):
+        print("Testing concept with max valid length (30 chars)..")
+        result = transfer_request("ES9121000418450200051332", "ES7921000813450200056789",
+                                  "Mortgage Payment March 25 Home", "URGENT", "2/2/2026", 2750.00)
+        print(f"Received result: {result}")
+        self.assertIsInstance(result, str)
+        self.assertEqual(len(result), 32)
+
+    def test_concept_min_length(self):
+        print("Testing concept with min valid length (10 chars)...")
+        result = transfer_request("ES9121000418450200051332", "ES7921000813450200056789", "Loan repay", "ORDINARY",
+                                  "14/09/2025", 350.25)
+        print(f"Received result: {result}")
+        self.assertIsInstance(result, str)
+        self.assertEqual(len(result), 32)
+
+    def test_transfer_different_valid_types(self):
+        print("Testing transfer with different valid types...")
+        result = transfer_request("ES9121000418450200051332", "ES7921000813450200056789", "Subscription Fee",
+                                  "URGENT", "7/8/2025", 999.99)
+        print(f"Received result: {result}")
+        self.assertIsInstance(result, str)
+        self.assertEqual(len(result), 32)
+
+    def test_transfer_last_valid_date(self):
+        print("Testing transfer on last valid date (31/12/2050)...")
+        result = transfer_request("ES9121000418450200051332", "ES7921000813450200056789", "Travel Booking", "IMMEDIATE",
+                                  "31/12/2050", 4300.00)
+        print(f"Received result: {result}")
+        self.assertIsInstance(result, str)
+        self.assertEqual(len(result), 32)
+
+    def test_transfer_first_valid_date(self):
+        print("Testing transfer on first valid date (25/03/2025)...")
+        result = transfer_request("ES9121000418450200051332", "ES7921000813450200056789", "Insurance Premium",
+                                  "ORDINARY", "25/03/2025", 1250.55)
+        print(f"Received result: {result}")
+        self.assertIsInstance(result, str)
+        self.assertEqual(len(result), 32)
 
 if __name__ == '__main__':
     unittest.main()
