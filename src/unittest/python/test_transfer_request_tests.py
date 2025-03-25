@@ -1,14 +1,12 @@
 import unittest
-import sys
-import os
-from unittest.mock import patch, mock_open
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../main/python')))
-from src.main.python.uc3m_money.transfer_request import transfer_request, AccountManagementException
+from uc3m_money import account_management_exception
+from uc3m_money.transfer_request import transfer_request, AccountManagementException
+
 
 
 class TransferRequestTests(unittest.TestCase):
-    """Test cases for the transfer_request function"""
+    """Test cases for the TransferRequest class"""
 
     def test_valid_transfer(self):
         print("Testing valid transfer request...")
@@ -21,7 +19,7 @@ class TransferRequestTests(unittest.TestCase):
     def test_min_valid_amount(self):
         print("Testing minimum valid transfer amount...")
         result = transfer_request("ES9121000418450200051332", "ES7921000813450200056789", "Car Repair", "IMMEDIATE",
-                                  "7/7/2025", 10)
+                                  "7/7/2025", 10.00)
         print(f"Received result: {result}")
         self.assertIsInstance(result, str)
         self.assertEqual(len(result), 32)
@@ -29,7 +27,7 @@ class TransferRequestTests(unittest.TestCase):
     def test_max_valid_amount(self):
         print("Testing maximum valid transfer amount...")
         result = transfer_request("ES9121000418450200051332", "ES7921000813450200056789",
-                                  "House renovation payment", "URGENT", "31/12/2050", 10000.0)
+                                  "House renovation payment", "URGENT", "31/12/2050", 10000.00)
         print(f"Received result: {result}")
         self.assertIsInstance(result, str)
         self.assertEqual(len(result), 32)
@@ -65,15 +63,15 @@ class TransferRequestTests(unittest.TestCase):
     def test_concept_too_short(self):
         print("Testing concept with 9 characters (invalid)...")
         with self.assertRaises(AccountManagementException) as context:
-            transfer_request("ES9121000418450200051332", "ES7921000813450200056789", "Rent pay", "ORDINARY", "7/7/2025",
-                             500.75)
+            transfer_request("ES9121000418450200051332", "ES7921000813450200056789", "Rent pay", "ORDINARY",
+                             "7/7/2025", 500.75)
         print(f"Exception raised: {context.exception}")
 
     def test_invalid_transfer_type(self):
         print("Testing invalid transfer type...")
         with self.assertRaises(AccountManagementException) as context:
-            transfer_request("ES9121000418450200051332", "ES7921000813450200056789", "House Rent", "FAST", "7/7/2025",
-                             500.75)
+            transfer_request("ES9121000418450200051332", "ES7921000813450200056789", "House Rent", "FAST",
+                             "7/7/2025", 500.75)
         print(f"Exception raised: {context.exception}")
 
     def test_invalid_past_date(self):
